@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Dktfelek</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="apple-touch-icon" href="dktfelekicon.png">
+<link rel="icon" type="image/png" href="dktfelekicon.png">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-yellow: #FFF9C4;   
+        --panel-white: #ffffff;
+        --primary: #FF6B6B;     
+        --secondary: #4ECDC4;   
+        --completed: #81C784;   
+        --dark: #2c3e50;        
+        --gold: #FFD700;        
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: 'Nunito', sans-serif;
+        background-color: var(--bg-yellow);
+        background-image: radial-gradient(#ffee58 15%, transparent 16%), radial-gradient(#ffee58 15%, transparent 16%);
+        background-size: 60px 60px;
+        background-position: 0 0, 30px 30px;
+        height: 100dvh; 
+        width: 100vw;
+        overflow: hidden; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    #loading-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: var(--bg-yellow); z-index: 2000;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        transition: opacity 0.5s ease;
+    }
+    
+    .loading-spinner {
+        width: 60px; height: 60px; border: 8px solid var(--secondary);
+        border-top: 8px solid var(--primary); border-radius: 50%;
+        animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    #password-container {
+        display: none; flex-direction: column; align-items: center; gap: 15px;
+        background: white; padding: 30px; border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 4px solid var(--primary);
+    }
+    .pass-input {
+        padding: 10px; font-size: 1.5rem; text-align: center; width: 150px;
+        border: 2px solid #ddd; border-radius: 10px; font-family: 'Nunito', sans-serif;
+    }
+    .pass-btn {
+        padding: 10px 30px; background: var(--secondary); color: white;
+        border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 800;
+        cursor: pointer; box-shadow: 0 4px 0 #2A9D8F;
+    }
+    .pass-btn:active { transform: translateY(4px); box-shadow: none; }
+
+
+    .screen {
+        display: none;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        padding: 10px;
+    }
+
+    .screen.active {
+        display: flex;
+    }
+
+    #menu-screen {
+        padding-top: 70px;
+        overflow: hidden;
+    }
+
+    .menu-bg-decoration {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; z-index: 5; display: flex; justify-content: center; align-items: center; overflow: hidden; pointer-events: none;
+    }
+    .decorative-wheel-container {
+        width: 85vmin; height: 85vmin; border-radius: 50%; border: 15px solid rgba(255, 255, 255, 0.5); box-shadow: 0 0 40px rgba(0,0,0,0.1); position: relative; overflow: hidden; animation: slowSpin 40s linear infinite; opacity: 0.85; 
+    }
+    @keyframes slowSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .deco-slice { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .deco-slice-content { position: absolute; top: 50%; left: 50%; width: 0; height: 0; }
+    .deco-icon { position: absolute; left: -40px; top: -220px; width: 80px; text-align: center; font-size: 50px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+
+    #background-icons-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; overflow: hidden; pointer-events: none; }
+    .floating-icon { position: absolute; animation: floatAnim 12s ease-in-out infinite alternate; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.15)); z-index: 2; }
+    @keyframes floatAnim { 0% { transform: translateY(0px) rotate(0deg); } 100% { transform: translateY(-20px) rotate(8deg); } }
+
+    .controls-container {
+        position: absolute;
+        top: max(20px, env(safe-area-inset-top));
+        left: 20px;
+        display: flex;
+        gap: 12px;
+        z-index: 50;
+    }
+
+    .top-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        background: white;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        transition: transform 0.1s;
+        position: relative;
+    }
+
+    .top-btn:active { transform: translateY(2px); box-shadow: none; }
+    
+    .music-btn { border-color: var(--secondary); color: var(--secondary); }
+    .voice-btn { border-color: var(--secondary); color: var(--secondary); } 
+    
+    .hamburger-btn { position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px; z-index: 50; }
+
+    .music-playing { background-color: #E0F2F1; animation: pulseEffect 2s infinite; }
+    @keyframes pulseEffect { 0% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(78, 205, 196, 0); } 100% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0); } }
+
+    .btn-crossed::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 70%;
+        height: 3px;
+        background-color: #FF5252;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        border-radius: 5px;
+        box-shadow: 0 0 2px white;
+        pointer-events: none;
+    }
+    .btn-crossed { background-color: #FAFAFA; opacity: 0.8; }
+
+    .dropdown-menu { display: none; position: absolute; top: 70px; right: 20px; background: white; border: 3px solid var(--primary); border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 51; flex-direction: column; overflow: hidden; width: 180px; }
+    .dropdown-menu.show { display: flex; animation: slideDown 0.2s ease; }
+    .menu-item { padding: 12px 15px; font-size: 1rem; font-weight: 700; color: var(--dark); border-bottom: 1px solid #eee; cursor: pointer; display: flex; gap: 10px; align-items: center;}
+    .menu-item:last-child { border-bottom: none; }
+
+    .menu-header { margin-bottom: 15px; text-align: center; background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 3px solid var(--primary); position: relative; z-index: 20; flex-shrink: 0; }
+    .menu-header h1 { color: var(--primary); font-size: 2rem; font-weight: 800; margin-bottom: 5px; }
+    .menu-header p { color: var(--dark); font-size: 1rem; font-weight: 700; margin: 0; }
+
+    .letter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; width: 100%; max-width: 600px; padding: 5px 15px 80px 15px; overflow-y: auto; flex-grow: 1; z-index: 20; scrollbar-width: none; -ms-overflow-style: none; }
+    .letter-grid::-webkit-scrollbar { display: none; }
+    .letter-btn { background-color: rgba(255, 255, 255, 0.9); border: 3px solid var(--secondary); border-radius: 15px; aspect-ratio: 1; font-size: 1.6rem; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; }
+    .letter-btn:active { transform: translateY(2px); box-shadow: none; }
+    .letter-btn.is-completed { background-color: var(--completed); border-color: #2e7d32; color: white; }
+
+    #game-screen { justify-content: space-evenly; padding-bottom: 40px; }
+    .game-nav { width: 100%; max-width: 600px; display: flex; justify-content: flex-start; padding: 10px; z-index: 10; flex-shrink: 0; }
+    .back-btn { background: white; color: var(--dark); border: 3px solid var(--dark); padding: 8px 20px; border-radius: 20px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 1.1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+    .back-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    .wheel-wrapper { position: relative; width: 85vw; height: 85vw; max-width: 380px; max-height: 380px; margin: 0 auto; touch-action: none; z-index: 20; flex-shrink: 0; }
+    .pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); z-index: 30; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid var(--dark); filter: drop-shadow(0 4px 2px rgba(0,0,0,0.3)); }
+    .wheel { width: 100%; height: 100%; border-radius: 50%; position: relative; border: 4px solid var(--dark); box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0s; overflow: hidden; background: white; }
+    .slice-content { position: absolute; top: 50%; left: 50%; width: 0; height: 0; }
+    
+    .slice-inner {
+        position: absolute; left: -40px; top: -150px; width: 80px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; color: white; transform-origin: bottom center; padding-top: 5px;
+    }
+    .slice-icon { font-size: 32px; margin-bottom: 2px; filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.3)); line-height: 1.2; }
+    .slice-text { font-size: 13px; font-weight: 800; line-height: 1.1; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); background: none; padding: 0; max-width: 65px; white-space: normal; word-wrap: break-word; }
+
+    .center-hub { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background-color: white; border-radius: 50%; z-index: 30; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px rgba(0,0,0,0.3); border: 5px solid var(--primary); text-align: center; }
+    .center-text { color: var(--dark); font-weight: 800; font-size: 1.4rem; line-height: 1; }
+
+    #spin-btn { background-color: var(--primary); color: white; border: none; padding: 12px 50px; font-size: 1.5rem; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 0 #c62828; font-family: inherit; font-weight: 800; margin-top: 10px; transition: transform 0.1s; z-index: 20; flex-shrink: 0; }
+    #spin-btn:active { transform: translateY(8px); box-shadow: none; }
+    
+    .hint-text { color: #546e7a; font-size: 0.9rem; margin-top: 10px; font-weight: 800; text-align: center; opacity: 0.9; animation: blink 3s infinite; z-index: 20; background: rgba(255,255,255,0.7); padding: 5px 10px; border-radius: 10px; flex-shrink: 0; }
+    @keyframes blink { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.5; } }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+    .modal-content { background: white; padding: 25px; border-radius: 25px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 6px solid var(--secondary); animation: popIn 0.4s ease; position: relative; }
+    .modal-icon { font-size: 3.5rem; margin-bottom: 10px; display: block; }
+    .grand-finale-content { border-color: var(--gold); background: linear-gradient(135deg, #fff 0%, #fff9c4 100%); }
+    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-content h2 { color: var(--primary); font-size: 1.8rem; margin-bottom: 10px; font-weight: 800; }
+    .modal-content p { font-size: 1.4rem; color: var(--dark); margin-bottom: 25px; line-height: 1.3; font-weight: 700; }
+    .modal-btn { background: var(--secondary); color: white; border: none; padding: 12px 35px; border-radius: 50px; font-size: 1.3rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 #2A9D8F; }
+    .modal-btn:active { transform: translateY(6px); box-shadow: none; }
+
+    .modal-speak-btn {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #eee;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        font-size: 1.4rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        color: var(--dark);
+        transition: transform 0.1s;
+    }
+    .modal-speak-btn:active { transform: scale(0.9); }
+
+</style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div id="loading-spinner" class="loading-spinner"></div>
+        <h2 id="loading-text" style="color:var(--primary); font-weight:800; margin-bottom:10px;">Dktfelek Başlatılıyor...</h2>
+    </div>
+
+    <div id="background-icons-container"></div>
+
+    <div id="menu-screen" class="screen active">
+        
+        <div class="menu-bg-decoration">
+            <div id="menu-decorative-wheel" class="decorative-wheel-container"></div>
+        </div>
+
+        <div class="controls-container">
+            <button class="top-btn music-btn" id="music-toggle" onclick="toggleMusic()">🔇</button>
+            <button class="top-btn voice-btn" id="voice-toggle" onclick="toggleVoice()">🗣️</button>
+        </div>
+
+        <button class="top-btn hamburger-btn" onclick="toggleMenu()">☰</button>
+        
+        <div id="dropdown-menu" class="dropdown-menu">
+            <div class="menu-item" onclick="resetGameTotal()">
+                <span class="menu-icon">🔄</span> Yenile
+            </div>
+            <div class="menu-item" onclick="exitGame()">
+                <span class="menu-icon">🚪</span> Çıkış
+            </div>
+        </div>
+
+        <div class="menu-header">
+            <h1>Ses Çarkı</h1>
+            <p>Çevirmek istediğin sesi seç!</p>
+        </div>
+        <div class="letter-grid" id="letter-grid">
+        </div>
+        
+        <div style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 0.85rem; font-weight: 800; color: black; z-index: 100; pointer-events: none; white-space: nowrap;">
+            Alperen Güngör tarafından yapılmıştır.
+        </div>
+        
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-nav">
+            <button class="back-btn" onclick="goToMenu()">❮ MENÜ</button>
+        </div>
+        
+        <div class="wheel-wrapper" id="wheel-wrapper">
+            <div class="pointer"></div>
+            <div class="wheel" id="wheel"></div>
+            <div class="center-hub">
+                <div class="center-text" id="center-text">A</div>
+            </div>
+        </div>
+
+        <button id="spin-btn" onclick="triggerSpin()">ÇEVİR!</button>
+        
+        <p class="hint-text">👆 Çarkı kaydırarak da çevirebilirsin! 👆</p>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-speak-btn" onclick="speakCurrentTask()">🔊</button>
+            <span class="modal-icon" id="result-icon">🌟</span>
+            <h2 id="result-title">Görev!</h2>
+            <p id="result-text">...</p>
+            <button class="modal-btn" onclick="closeModal()">Tamamladım!</button>
+        </div>
+    </div>
+
+    <div id="congrats-modal" class="modal">
+        <div class="modal-content" style="border-color: var(--primary);">
+            <span class="modal-icon">🏆</span>
+            <h2>HARİKASIN!</h2>
+            <p>Bütün görevleri bitirdin!</p>
+            <button class="modal-btn" style="background-color: var(--primary); box-shadow: 0 6px 0 #c0392b;" onclick="finishGame()">Menüye Dön</button>
+        </div>
+    </div>
+
+    <div id="grand-finale-modal" class="modal">
+        <div class="modal-content grand-finale-content">
+            <span class="modal-icon">👑</span>
+            <h2 style="color: #FBC02D;">İNANILMAZSIN!</h2>
+            <p>Bütün alfabeyi bitirdin!<br>Sen gerçek bir şampiyonsun!</p>
+            <button class="modal-btn" style="background-color: var(--gold); color: #5d4037; box-shadow: 0 6px 0 #F57F17;" onclick="resetGameTotal()">Baştan Başla</button>
+        </div>
+    </div>
+
+<script>
+    const STORAGE_KEY = 'dkt_progress_v1';
+
+    window.onload = function() {
+        setTimeout(() => {
+            const overlay = document.getElementById("loading-overlay");
+            overlay.style.opacity = "0";
+            setTimeout(() => { overlay.style.display = "none"; }, 500);
+            initGame();
+        }, 1500); 
+    };
+
+    const alfabe = "ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ";
+    
+    const gorevSablonlari = [
+        "{H} ile başlayan hayvan söyle.",       
+        "İçinde {H} geçen 3 heceli kelime söyle.",    
+        "{H} ile başlayan insan ismi söyle.",         
+        "Sonunda {H} olan bir eşya söyle.",           
+        "{H} ile başlayan bir yemek söyle.",          
+        "İçinde {H} geçen bir renk söyle.",           
+        "{H} ile başlayan 3 kelime say.",       
+        "{H} harfini parmağınla havaya çiz."    
+    ];
+
+    const softGTasks = [
+        "İçinde Ğ harfi bulunan 5 kelime söyle."
+    ];
+
+    const ozelGorevler = {
+        "A": [ {index: 4, text: "A ile başlayan içecek söyle.", icon: "🧃"} ],
+        "B": [ {index: 4, text: "B ile başlayan yiyecek söyle."}, {index: 3, text: "Başında B olan bir eşya söyle."} ],
+        "Ç": [ 
+            {index: 1, text: "İçinde Ç geçen 2 heceli kelime söyle."}, 
+            {index: 4, text: "Ç ile başlayan yiyecek söyle."},
+            {index: 5, text: "Başında olmayıp içinde Ç geçen bir kelime söyle.", icon: "❓"},
+            {index: 3, text: "Sonunda Ç olan bir tamir eşyası söyle.", icon: "🛠️"}
+        ],
+        "D": [
+            {index: 4, text: "D ile başlayan yiyecek söyle."},
+            {index: 1, text: "İçinde D geçen 1 heceli kelime söyle."},
+            {index: 3, text: "İçinde D olan herhangi bir kelime söyle.", icon: "❓"},
+            {index: 5, text: "D ile başlayan bir kız ismi söyle.", icon: "👧"}
+        ],
+        "E": [ {index: 4, text: "E ile başlayan yiyecek söyle."}, {index: 1, text: "İçinde E geçen 2 heceli kelime söyle."} ],
+        "F": [
+            {index: 5, text: "F ile başlayan erkek ismi söyle.", icon: "👦"},
+            {index: 4, text: "F ile başlayan bir kız ismi söyle.", icon: "👧"},
+            {index: 6, text: "F ile başlayan 2 kelime söyle."}, 
+            {index: 1, text: "İçinde F geçen 2 heceli kelime söyle."},
+            {index: 2, text: "F ile başlayan spor dalı söyle.", icon: "❓"},
+            {index: 3, text: "İnsanda bulunur, içinde F harfi vardır bu nedir?", icon: "❓"}
+        ],
+        "G": [
+            {index: 6, text: "Denizde olurum yolculuk ederim ben neyim?", icon: "❓"}, 
+            {index: 1, text: "İçinde G geçen 2 heceli kelime söyle."},
+            {index: 3, text: "İnsanda da varım hayvanda da varım ben bir çift neyim?", icon: "❓"},
+            {index: 4, text: "Nehir, ırmak, dere gibi akmam ben olduğum yerde dururum. Bana ne derler?", icon: "❓"}
+        ],
+        "H": [
+            {index: 4, text: "H ile başlarım kışın her odada bulunurum. Ben neyim?", icon: "🏠"},
+            {index: 0, text: "İçinde H geçen bir hayvan söyle."},
+            {index: 3, text: "İçinde H olan bir erkek ismi söyle.", icon: "👦"},
+            {index: 2, text: "H ile başlayan kız ismi söyle.", icon: "👧"},
+            {index: 6, text: "H ile başlarım kahvaltıda yenirim ben neyim?", icon: "🍎"} 
+        ],
+        "I": [
+            {index: 6, text: "I ile başlayan 2 kelime söyle.", icon: "❓"}, 
+            {index: 0, text: "İçinde I geçen bir renk söyle.", icon: "🎨"}
+        ],
+        "İ": [ {index: 3, text: "İçinde İ geçen bir eşya söyle."} ],
+        "J": [
+            {text: "İçinde J olan bir kelime söyle.", icon: "❓"},
+            {text: "J ile başlayan insan ismi söyle.", icon: "👤"},
+            {text: "J harfini parmağınla havaya çiz.", icon: "✏️"},
+            {text: "J harfiyle başlayan bir hayvan söyle.", icon: "🐆"}
+        ],
+        "K": [
+            {index: 4, text: "K ile başlarım K ile biterim ben neyim?", icon: "👤"},
+            {index: 5, text: "Ben bir kuzuysam annem de bir ...'dur.", icon: "🐑"}
+        ],
+        "L": [
+            {index: 1, text: "İçinde L geçen 2 heceli kelime söyle."},
+            {index: 3, text: "Ayılar beni çok sever Arılar ise beni üretir ben neyim?", icon: "🧸"},
+            {index: 2, text: "L ile başlayan çiçek ismi söyle.", icon: "🌸"},
+            {index: 6, text: "İnsanda bulunurum ve herkese hayat veririm. Ben neyim?", icon: "❓"}, 
+            {index: 0, text: "İçinde L olan hayvan ismi söyle."}
+        ],
+        "M": [ {index: 5, text: "M ile başlayan 3 kız ismi söyle.", icon: "👧"} ],
+        "N": [
+            {index: 0, text: "Ormanda sürünürüm zehirli olabilirim ben neyim?", icon: "🐍"},
+            {index: 3, text: "İçinde N olan bir eşya söyle."}
+        ],
+        "O": [
+            {index: 4, text: "O ile başlayan 3 erkek ismi söyle.", icon: "👦"},
+            {index: 0, text: "İnsanlarda baş ile vücudu bağlarım ben neyim?", icon: "❓"},
+            {index: 2, text: "İçinde O olan 2 teknolojik alet söyle.", icon: "❓"},
+            {index: 1, text: "İçinde O olan 2 heceli kelime söyle."},
+            {index: 3, text: "Ben yemyeşil bir topluluğum. Acaba neyim?", icon: "❓"}
+        ],
+        "P": [ {index: 1, text: "İçinde P geçen 2 heceli kelime söyle."} ],
+        "R": [
+            {index: 0, text: "İçinde R olan hayvan söyle."},
+            {index: 4, text: "İçinde R olan bir yemek söyle."},
+            {index: 6, text: "İnsanlarda bulunurum 20 tane olmaktan memnunum. Ben neyim?", icon: "❓"} 
+        ],
+        "S": [
+            {index: 3, text: "S ile biten herhangi bir şey söyle.", icon: "❓"},
+            {index: 5, text: "Parkta olurum çocuklar beni sever.", icon: "❓"},
+            {index: 1, text: "S ile başlarım. Mutlu olmakla aynı anlama gelirim. Ben bir duyguyum.", icon: "🙂"}
+        ],
+        "Ş": [
+            {index: 1, text: "İçinde Ş geçen 2 heceli kelime söyle."},
+            {index: 3, text: "Bir şey dolu değilse nedir?", icon: "❓"},
+            {index: 6, text: "Bayramlarda dağıtılırım cocuklar çok sever. Ben neyim?", icon: "❓"}, 
+            {index: 0, text: "Bulutlar birbirine çarptığında oluşurum. Çok sesli bir hava olayıyım. Ben neyim?", icon: "⛈️"},
+            {index: 4, text: "Çorba içerken kullanılırım. Yanımda eşim de vardır. Ben neyim?", icon: "🥣"}
+        ],
+        "T": [
+            {index: 3, text: "Bir alet bozulduğunda onu yeniden düzeltmeye ne denir?", icon: "🛠️"},
+            {index: 4, text: "İnsanlar beni çok sever. Yemekten sonra güzel gider. Ben neyim?", icon: "😋"},
+            {index: 1, text: "Ben bir ulaşım aracıyım adımda T harfi vardır.", icon: "🚗"}
+        ],
+        "U": [
+            {index: 4, text: "Gece yukarı baktım ve uçsuz bucaksız ama çok güzel bir şey gördüm.", icon: "🌕"},
+            {index: 0, text: "İçinde U geçen 3 hayvan ismi söyle."},
+            {index: 1, text: "Ona yüzmek için gireriz. Adımda U vardır", icon: "❓"}
+        ],
+        "Ü": [
+            {index: 4, text: "Ü ile başlayan bir meyve söyle.", icon: "🍎"},
+            {index: 2, text: "Ben bir duyguyum.", icon: "😢"}, 
+            {index: 6, text: "İçinde Ü olan bir kelime söyle."}, 
+            {index: 0, text: "Türkiye bir nedir?", icon: "🇹🇷"}, 
+            {index: 1, text: "Bir şey kocamansa b....tür, minikse k....tür.", icon: "❓"},
+            {index: 5, text: "Bir nesnenin hem altı vardır hem de ..tü vardır.", icon: "⬆️"} 
+        ],
+        "V": [
+            {index: 1, text: "Arkadaşımdan bir oyuncak ödünç aldıysam onu daha sonra tekrar ne yapmam lazım?", icon: "🧸"},
+            {index: 5, text: "Birisine kızsam da ona kesinlikle vuramam. Vurmak kötü bir davranıştır.", icon: "❌"},
+            {index: 4, text: "Evde süs olarak bulunur. Top oynarsam düşürüp kırabilirim. V ile başlar.", icon: "📦"},
+            {index: 2, text: "Ben bir spor dalıyım. Daha çok kızlar tercih eder.", icon: "❓"},
+            {index: 6, text: "Sinekler uçarken nasıl ses çıkarır?", icon: "🪰"}, 
+            {index: 0, text: "Yok kelimesinin tersi nedir?", icon: "❓"}
+        ],
+        "Y": [
+            {index: 3, text: "Ok fırlatmak için kullanılırım. 3 harfliyimdir.", icon: "🏹"},
+            {index: 4, text: "İlk harfi Y olan beyaz bir yiyeceğim.", icon: "🥄"},
+            {index: 1, text: "Ben bir şekilim ama ne kareyim ne de üçgenim. İlk harfim Y'dir.", icon: "🔵"}
+        ],
+        "Z": [
+            {index: 4, text: "Z ile başlayan bir yiyecek söyle. Hem yeşili vardır hem siyahı. Kahvaltıda yenir."}, 
+            {index: 1, text: "Bir şey kolay değilse nedir?", icon: "❓"},
+            {index: 3, text: "Eve misafir geldiyse neye basarlar ve kapı çalar?", icon: "🚪"}
+        ],
+        "C": [
+            {index: 6, text: "C ile başlayan bir kıyafet söyle.", icon: "🧥"}, 
+            {index: 3, text: "Pantolonların sağında ve solunda bulunur. C ile başlar.", icon: "👖"},
+            {index: 0, text: "İçinde C geçen bir hayvan ismi söyle. Küçücüktür yerde dolanır.", icon: "🐣"},
+            {index: 1, text: "C ile başlayan bir kız ismi söyle.", icon: "👧"},
+            {index: 2, text: "C ile başlayan bir erkek ismi söyle.", icon: "👦"},
+            {index: 4, text: "C ile başlayan bir yiyecektir. Küçük, kahverengi ve yuvarlaktır. Fındık ve fıstıkla birlikte gider.", icon: "🥜"},
+            {index: 5, text: "Uzun süre yemek yemezsem karnım ne olur?", icon: "❓"}
+        ],
+        "Ö": [
+            {index: 5, text: "Sevdiğim birisini uzun süre görmezsem onu çok ö...... .", icon: "🫂"},
+            {index: 6, text: "Sevdiğim insanları yanağından ne yaparım?", icon: "😚"}, 
+            {index: 4, text: "Ö ile başlayan bir kız ismi söyle.", icon: "👧"},
+            {index: 2, text: "Ö ile başlayan bir erkek ismi söyle.", icon: "👦"},
+            {index: 3, text: "Bülbüller ses çıkarmak için ne yapar? Ö ile başlıyor.", icon: "🐦"},
+            {index: 1, text: "Yürürken ne tarafa bakmak gerekir?", icon: "🚶"}
+        ]
+    };
+
+    const anaMenuIkonlari = ["👩‍🏫", "🔢", "🍎", "🦁", "🎨", "🌳"];
+    const uniqueIconList = ["👩‍🏫", "🔢", "🍎", "🦁", "🎨", "🌳", "🧸", "🎵", "👤", "✏️", "⛰️", "❓"];
+    const dilimRenkleri = ["#FF5252", "#FFD740", "#69F0AE", "#448AFF", "#FF6E40", "#E040FB"];
+
+    let audioCtx = null;
+    let musicInterval = null;
+    let isMusicPlaying = false; 
+    let isVoiceEnabled = false; 
+
+    let aktifHarf = "";
+    let aktifGorevler = [];
+    let tamamlananHarfler = []; 
+    let currentRotation = 0;
+    
+    let isSpinning = false;
+    let spinAnimationFrame = null;
+
+    function initGame() {
+        loadProgress();
+        createBackgroundIcons();
+        drawDecorativeWheel();   
+        menuOlustur();
+        setupTouchEvents();
+        updateVoiceButton(); 
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById("dropdown-menu");
+            const btn = document.querySelector(".hamburger-btn");
+            if (!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+            }
+        });
+    }
+
+    function loadProgress() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                tamamlananHarfler = JSON.parse(saved);
+            } catch (e) {
+                console.error("Kayıt okuma hatası", e);
+                tamamlananHarfler = [];
+            }
+        }
+    }
+
+    function saveProgress() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tamamlananHarfler));
+    }
+
+    function drawDecorativeWheel() {
+        const wheel = document.getElementById("menu-decorative-wheel");
+        wheel.innerHTML = "";
+        const dilimSayisi = anaMenuIkonlari.length;
+        const aci = 360 / dilimSayisi;
+        let gradientStr = "";
+        for (let i = 0; i < dilimSayisi; i++) {
+            const renk = dilimRenkleri[i % dilimRenkleri.length];
+            gradientStr += `${renk} ${i * aci}deg ${(i + 1) * aci}deg, `;
+            const sliceContent = document.createElement("div");
+            sliceContent.className = "deco-slice-content";
+            const rotation = (i * aci) + (aci / 2);
+            sliceContent.style.transform = `rotate(${rotation}deg)`;
+            const iconDiv = document.createElement("div");
+            iconDiv.className = "deco-icon";
+            iconDiv.innerText = anaMenuIkonlari[i];
+            sliceContent.appendChild(iconDiv);
+            wheel.appendChild(sliceContent);
+        }
+        gradientStr = gradientStr.slice(0, -2);
+        wheel.style.background = `conic-gradient(${gradientStr})`;
+    }
+
+    function createBackgroundIcons() {
+        const container = document.getElementById("background-icons-container");
+        container.innerHTML = "";
+        const shuffledIcons = [...uniqueIconList].sort(() => 0.5 - Math.random());
+        const placedIcons = [];
+        const isMobile = window.innerWidth < 600;
+        const iconsToPlace = isMobile ? shuffledIcons.slice(0, 8) : shuffledIcons;
+
+        iconsToPlace.forEach(iconSymbol => {
+            const span = document.createElement("span");
+            span.className = "floating-icon";
+            span.innerText = iconSymbol;
+            if(isMobile) {
+                span.style.fontSize = "3rem";
+                span.style.opacity = "0.7"; 
+            } else {
+                span.style.fontSize = "5rem";
+                span.style.opacity = "1";
+            }
+            let attempts = 0;
+            let valid = false;
+            let left, top;
+            while(attempts < 150 && !valid) {
+                 valid = true;
+                 left = Math.random() * 90 + 5; 
+                 top = Math.random() * 90 + 5;
+                 if (top > 10 && top < 90 && left > 10 && left < 90) valid = false;
+                 if (top < 15 && (left < 20 || left > 80)) valid = false;
+                 if(valid) {
+                     for(let p of placedIcons) {
+                         const dist = Math.sqrt(Math.pow(left - p.x, 2) + Math.pow(top - p.y, 2));
+                         if(dist < 15) { valid = false; break; }
+                     }
+                 }
+                 attempts++;
+            }
+            if(valid) {
+                span.style.left = left + "vw";
+                span.style.top = top + "vh";
+                span.style.animationDelay = (Math.random() * 5) + "s";
+                span.style.animationDuration = (8 + Math.random() * 8) + "s";
+                container.appendChild(span);
+                placedIcons.push({x:left, y:top});
+            }
+        });
+    }
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    function toggleMusic() {
+        initAudio();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const btn = document.getElementById("music-toggle");
+        if (isMusicPlaying) {
+            clearInterval(musicInterval);
+            isMusicPlaying = false;
+            btn.innerText = "🔇";
+            btn.classList.remove("music-playing");
+        } else {
+            playBackgroundMusic();
+            isMusicPlaying = true;
+            btn.innerText = "🎵";
+            btn.classList.add("music-playing");
+        }
+    }
+
+    function toggleVoice() {
+        isVoiceEnabled = !isVoiceEnabled;
+        updateVoiceButton();
+        if(!isVoiceEnabled) {
+            if('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+    }
+
+    function updateVoiceButton() {
+        const btn = document.getElementById("voice-toggle");
+        if(isVoiceEnabled) {
+            btn.classList.remove("btn-crossed"); 
+        } else {
+            btn.classList.add("btn-crossed"); 
+        }
+    }
+    
+    function playBackgroundMusic() {
+        const melody = [261.63, 293.66, 329.63, 392.00, 440.00, 392.00, 329.63];
+        let noteIndex = 0;
+        playNote(melody[0], 0.5); 
+        musicInterval = setInterval(() => {
+            noteIndex = (noteIndex + 1) % melody.length;
+            if(Math.random() > 0.1) playNote(melody[noteIndex], 0.4);
+        }, 800);
+    }
+    
+    function playNote(freq, duration) {
+        if(!isMusicPlaying) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const now = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.start(now);
+        osc.stop(now + duration);
+    }
+    
+    function playTickSound() {
+        if (!audioCtx) initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function getTurkishFemaleVoice(voices) {
+        let voice = voices.find(v => v.lang.includes('tr') && (v.name.includes('Female') || v.name.includes('Kadın') || v.name.includes('Yelda')));
+        if (!voice) voice = voices.find(v => v.lang.includes('tr') && v.name.includes('Google'));
+        if (!voice) voice = voices.find(v => v.lang.includes('tr'));
+        return voice;
+    }
+
+    function speakText(text) {
+        if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+        
+        window.speechSynthesis.cancel(); 
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'tr-TR';
+        utterance.rate = 0.8; 
+        utterance.pitch = 1;
+
+        const voices = window.speechSynthesis.getVoices();
+        const trVoice = getTurkishFemaleVoice(voices);
+        
+        if (trVoice) utterance.voice = trVoice;
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function speakCurrentTask() {
+        const text = document.getElementById("result-text").innerText;
+        if(text) speakText(text);
+    }
+
+    function ikonBul(metin, ozelIcon) {
+        if(ozelIcon) return ozelIcon; 
+        if(metin.includes("5 kelime")) return "❓";
+        metin = metin.toLowerCase();
+        if(metin.includes("hayvan") || metin.includes("kurbağa")) return "🦁";
+        if(metin.includes("yemek") || metin.includes("meyve") || metin.includes("yiyecek")) return "🍎";
+        if(metin.includes("eşya") || metin.includes("düğme") || metin.includes("kağıt")) return "🧸";
+        if(metin.includes("renk")) return "🎨";
+        if(metin.includes("şarkı")) return "🎵"; 
+        if(metin.includes("isim") || metin.includes("oğuz")) return "👤";
+        if(metin.includes("sayı") || metin.includes("hecele")) return "🔢";
+        if(metin.includes("çiz")) return "✏️";
+        if(metin.includes("tekrarla")) return "🗣️"; 
+        if(metin.includes("ağaç")) return "🌳";
+        if(metin.includes("dağ")) return "⛰️";
+        if(metin.includes("öğretmen")) return "👩‍🏫";
+        return "❓";
+    }
+
+    function getKisaMetin(tamGorev) {
+        let kisaMetin = tamGorev;
+        if(kisaMetin.includes("5 kelime")) return "Bul ve Söyle";
+        if(kisaMetin.includes("Ben neyim") || kisaMetin.includes("Bana ne derler") || kisaMetin.includes("Ben bir")) return "Bilmece";
+        if(kisaMetin.includes("hayvan")) return "Hayvan";
+        if(kisaMetin.includes("yemek") || kisaMetin.includes("yiyecek")) return "Yiyecek";
+        if(kisaMetin.includes("eşya")) return "Eşya";
+        if(kisaMetin.includes("şarkı")) return "Şarkı";
+        if(kisaMetin.includes("isim")) return "İsim";
+        if(kisaMetin.includes("renk")) return "Renk";
+        if(kisaMetin.includes("çiz")) return "Çiz";
+        if(kisaMetin.includes("E-")) return "Tekrarla";
+        if(kisaMetin.includes("hecele")) return "Hecele";
+        if(kisaMetin.includes("cümle")) return "Cümle";
+        return "Bul"; 
+    }
+
+    function menuOlustur() {
+        const grid = document.getElementById("letter-grid");
+        grid.innerHTML = "";
+        for (let i = 0; i < alfabe.length; i++) {
+            const harf = alfabe[i];
+            const btn = document.createElement("button");
+            btn.innerText = harf;
+            btn.className = "letter-btn";
+            if (tamamlananHarfler.includes(harf)) {
+                btn.classList.add("is-completed");
+                btn.innerHTML = harf + "<span style='font-size:1rem;margin-left:4px'>✓</span>";
+            }
+            btn.onclick = function() { oyunuBaslat(harf); };
+            grid.appendChild(btn);
+        }
+    }
+    
+    function toggleMenu() { document.getElementById("dropdown-menu").classList.toggle("show"); }
+
+    function resetGameTotal() {
+        if(confirm("Tüm ilerlemeniz ve kazanılan harfler silinecek. Emin misiniz?")) {
+            tamamlananHarfler = [];
+            localStorage.removeItem(STORAGE_KEY);
+            document.getElementById("dropdown-menu").classList.remove("show");
+            document.getElementById("grand-finale-modal").style.display = "none";
+            createBackgroundIcons();
+            menuOlustur();
+            goToMenu();
+        }
+    }
+
+    function exitGame() {
+        if(confirm("Oyundan çıkmak istiyor musunuz?")) {
+            window.close();
+            window.location.href = "about:blank";
+        }
+    }
+
+    function oyunuBaslat(harf) {
+        initAudio();
+        aktifHarf = harf;
+        let generatedTasks = [];
+
+        if (ozelGorevler[harf] && !ozelGorevler[harf][0].index && harf === "J") {
+             generatedTasks = ozelGorevler[harf].map(g => ({ text: g.text, icon: g.icon || null }));
+        } else if (harf === "Ğ") {
+             generatedTasks = softGTasks.map(text => ({ text: text, icon: null }));
+        } else {
+            generatedTasks = gorevSablonlari.map(sablon => ({ text: sablon.replace(/{H}/g, harf), icon: null }));
+            if (ozelGorevler[harf]) {
+                ozelGorevler[harf].forEach(ozel => {
+                    if(ozel.index >= 0 && ozel.index < generatedTasks.length) {
+                        generatedTasks[ozel.index] = { text: ozel.text, icon: ozel.icon || null };
+                    }
+                });
+            }
+        }
+
+        if (harf === "J" || harf === "Ğ") {
+            aktifGorevler = generatedTasks;
+        } else {
+            const bulTasks = generatedTasks.filter(t => getKisaMetin(t.text) === "Bul");
+            const otherTasks = generatedTasks.filter(t => getKisaMetin(t.text) !== "Bul");
+
+            let distributedTasks = [];
+            if (otherTasks.length === 0) {
+                distributedTasks = bulTasks;
+            } else if (bulTasks.length === 0) {
+                distributedTasks = otherTasks;
+            } else {
+                let baseCount = Math.floor(bulTasks.length / otherTasks.length);
+                let remainder = bulTasks.length % otherTasks.length;
+                let bulIndex = 0;
+
+                for (let i = 0; i < otherTasks.length; i++) {
+                    distributedTasks.push(otherTasks[i]);
+                    let countToAdd = baseCount + (remainder > 0 ? 1 : 0);
+                    if(remainder > 0) remainder--;
+                    for(let j=0; j < countToAdd; j++) {
+                        if(bulIndex < bulTasks.length) {
+                            distributedTasks.push(bulTasks[bulIndex]);
+                            bulIndex++;
+                        }
+                    }
+                }
+            }
+            aktifGorevler = distributedTasks;
+        }
+
+        document.getElementById("menu-screen").classList.remove("active");
+        document.getElementById("game-screen").classList.add("active");
+        document.getElementById("center-text").innerText = harf;
+
+        if (harf === 'Ğ') { currentRotation = 180; } else { currentRotation = 0; }
+
+        carkiCiz();
+    }
+
+    function carkiCiz() {
+        const wheel = document.getElementById("wheel");
+        wheel.innerHTML = "";
+        const dilimSayisi = aktifGorevler.length;
+
+        if (dilimSayisi === 0) {
+            setTimeout(() => { document.getElementById("congrats-modal").style.display = "flex"; }, 600);
+            return;
+        }
+
+        const aci = 360 / dilimSayisi;
+        let gradientStr = "";
+
+        for (let i = 0; i < dilimSayisi; i++) {
+            let renk = dilimRenkleri[i % dilimRenkleri.length];
+            if (aktifHarf === 'Ğ') renk = "#448AFF"; 
+            gradientStr += `${renk} ${i * aci}deg ${(i + 1) * aci}deg, `;
+            const sliceContent = document.createElement("div");
+            sliceContent.className = "slice-content";
+            const rotation = (i * aci) + (aci / 2);
+            sliceContent.style.transform = `rotate(${rotation}deg)`;
+            const sliceInner = document.createElement("div");
+            sliceInner.className = "slice-inner";
+            const gorevObj = aktifGorevler[i];
+            const ikon = ikonBul(gorevObj.text, gorevObj.icon);
+            const kisaMetin = getKisaMetin(gorevObj.text);
+            sliceInner.innerHTML = `<div class="slice-icon">${ikon}</div><div class="slice-text">${kisaMetin}</div>`;
+            sliceContent.appendChild(sliceInner);
+            wheel.appendChild(sliceContent);
+        }
+
+        gradientStr = gradientStr.slice(0, -2);
+        wheel.style.background = `conic-gradient(${gradientStr})`;
+        wheel.style.transform = `rotate(${currentRotation}deg)`;
+    }
+
+    function triggerSpin() {
+        if(aktifGorevler.length === 0) return;
+        spinLogic(1080 + Math.random() * 720); 
+    }
+
+    function spinLogic(forceAmount) {
+        if(spinAnimationFrame) cancelAnimationFrame(spinAnimationFrame);
+        
+        isSpinning = true;
+        
+        let startRotation = currentRotation;
+        let targetRotation = startRotation + forceAmount;
+        let startTime = null;
+        const duration = 4000;
+
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const progress = (timestamp - startTime) / duration;
+            
+            if (progress < 1) {
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                const prevRotation = currentRotation;
+                
+                currentRotation = startRotation + ((targetRotation - startRotation) * easeOut);
+                document.getElementById("wheel").style.transform = `rotate(${currentRotation}deg)`;
+                
+                const step = 45;
+                if (Math.floor(currentRotation / step) > Math.floor(prevRotation / step)) {
+                   playTickSound();
+                }
+                
+                spinAnimationFrame = requestAnimationFrame(animate);
+            } else {
+                currentRotation = targetRotation;
+                document.getElementById("wheel").style.transform = `rotate(${currentRotation}deg)`;
+                isSpinning = false;
+                spinAnimationFrame = null;
+                
+                const dilimSayisi = aktifGorevler.length;
+                const dilimAcisi = 360 / dilimSayisi;
+                const normalizedDeg = currentRotation % 360;
+                const pointerPos = (360 - normalizedDeg) % 360;
+                const winningIndex = Math.floor(pointerPos / dilimAcisi);
+                sonucuGoster(winningIndex);
+            }
+        }
+        spinAnimationFrame = requestAnimationFrame(animate);
+    }
+
+    function setupTouchEvents() {
+        const wrapper = document.getElementById("wheel-wrapper");
+        let startY;
+        wrapper.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        }, {passive: false});
+
+        wrapper.addEventListener('touchmove', (e) => { e.preventDefault(); }, {passive: false});
+
+        wrapper.addEventListener('touchend', (e) => {
+            if(aktifGorevler.length === 0) return;
+            const endY = e.changedTouches[0].clientY;
+            const distance = startY - endY;
+            if (Math.abs(distance) > 30) {
+                spinLogic(1200 + (Math.abs(distance) * 4));
+            }
+        });
+    }
+
+    let silinecekIndex = -1;
+
+    function sonucuGoster(index) {
+        if(isSpinning) return;
+
+        if(index >= aktifGorevler.length) index = 0;
+        silinecekIndex = index;
+        const gorevObj = aktifGorevler[index];
+        const ikon = ikonBul(gorevObj.text, gorevObj.icon);
+        
+        document.getElementById("result-icon").innerText = ikon;
+        const resultTitle = document.getElementById("result-title");
+        resultTitle.innerHTML = `<span style="color:var(--dark)">Harf: </span><span style="color:var(--primary)">${aktifHarf}</span>`;
+
+        document.getElementById("result-text").innerText = gorevObj.text;
+        document.getElementById("result-modal").style.display = "flex";
+        
+        setTimeout(() => {
+            speakText(gorevObj.text);
+        }, 600);
+
+        if(audioCtx && audioCtx.state === 'running') {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(400, audioCtx.currentTime);
+            o.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            o.start();
+            o.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById("result-modal").style.display = "none";
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        
+        if(silinecekIndex > -1) {
+            aktifGorevler.splice(silinecekIndex, 1);
+            silinecekIndex = -1;
+            carkiCiz();
+        }
+    }
+
+    function goToMenu() {
+        document.getElementById("game-screen").classList.remove("active");
+        document.getElementById("menu-screen").classList.add("active");
+        aktifGorevler = [];
+    }
+
+    function finishGame() {
+        document.getElementById("congrats-modal").style.display = "none";
+        if(!tamamlananHarfler.includes(aktifHarf)) {
+            tamamlananHarfler.push(aktifHarf);
+            saveProgress();
+        }
+        if (tamamlananHarfler.length === alfabe.length) document.getElementById("grand-finale-modal").style.display = "flex";
+        else { menuOlustur(); goToMenu(); }
+    }
+</script>
+</body>
+</html>

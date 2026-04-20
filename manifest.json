@@ -1,0 +1,15 @@
+{
+  "name": "Dktfelek",
+  "short_name": "Dktfelek",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFF9C4",
+  "theme_color": "#FFF9C4",
+  "icons": [
+    {
+      "src": "dktfelekicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
