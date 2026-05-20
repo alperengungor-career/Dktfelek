@@ -62,23 +62,6 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #password-container {
-        display: none; flex-direction: column; align-items: center; gap: 15px;
-        background: white; padding: 30px; border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 4px solid var(--primary);
-    }
-    .pass-input {
-        padding: 10px; font-size: 1.5rem; text-align: center; width: 150px;
-        border: 2px solid #ddd; border-radius: 10px; font-family: 'Nunito', sans-serif;
-    }
-    .pass-btn {
-        padding: 10px 30px; background: var(--secondary); color: white;
-        border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 800;
-        cursor: pointer; box-shadow: 0 4px 0 #2A9D8F;
-    }
-    .pass-btn:active { transform: translateY(4px); box-shadow: none; }
-
-
     .screen {
         display: none;
         width: 100%;
@@ -486,7 +469,7 @@
         ],
         "C": [
             {index: 6, text: "C ile başlayan bir kıyafet söyle.", icon: "🧥"}, 
-            {index: 3, text: "Pantolonların sağında ve solunda bulunur. C ile başlar.", icon: "👖"},
+            {index: 3, text: "Pantolonların sağında ve leftunda bulunur. C ile başlar.", icon: "👖"},
             {index: 0, text: "İçinde C geçen bir hayvan ismi söyle. Küçücüktür yerde dolanır.", icon: "🐣"},
             {index: 1, text: "C ile başlayan bir kız ismi söyle.", icon: "👧"},
             {index: 2, text: "C ile başlayan bir erkek ismi söyle.", icon: "👦"},
@@ -1038,6 +1021,15 @@
         }
         if (tamamlananHarfler.length === alfabe.length) document.getElementById("grand-finale-modal").style.display = "flex";
         else { menuOlustur(); goToMenu(); }
+    }
+
+    // PWA Çevrimdışı Çalışması için Service Worker Kaydı
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker kayıt başarılı:', reg.scope))
+                .catch(err => console.log('Service Worker kaydı başarısız:', err));
+        });
     }
 </script>
 </body>
